@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Clients Connectés</title>
+</head>
+<body>
+<h1>Clients Connectés</h1>
+<ul id="clients"></ul>
+<button onclick="clearLogs()">Clear Logs</button>
+
+<script>
+async function fetchClients() {
+    const ul = document.getElementById("clients");
+    try {
+        const clients = await fetch("/clients").then(r => r.json());
+        ul.innerHTML = "";
+        clients.forEach(c => {
+            const li = document.createElement("li");
+            li.textContent = c;
+            ul.appendChild(li);
+        });
+    } catch (err) {
+        console.error("Erreur fetch clients :", err);
+    }
+}
+
+async function clearLogs() {
+    await fetch("/clear").then(r => r.json());
+    fetchClients();
+}
+
+// Rafraîchit toutes les secondes
+setInterval(fetchClients, 1000);
+fetchClients();
+</script>
+</body>
+</html>
