@@ -1,56 +1,52 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-// Tableau des clients
 let clients = [];
+let logs = [];
 
-// DEBUG : log toutes les requêtes entrantes
-app.use((req, res, next) => {
-    console.log(`[DEBUG] ${req.method} ${req.url}`, req.body || "");
-    next();
+// Page principale
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/index.html");
 });
 
-// Enregistrer un client
+// Enregistrement d’un client
 app.post("/register", (req, res) => {
-    console.log("[REGISTER] Reçu body :", req.body);
-    const name = req.body.clientName;
-    if (name) {
-        console.log("[REGISTER] Nom trouvé :", name);
-        if (!clients.includes(name)) {
-            clients.push(name);
-            console.log("[SERVER] Nouveau client ajouté :", name);
-        } else {
-            console.log("[SERVER] Client déjà enregistré :", name);
-        }
-    } else {
-        console.log("[REGISTER] Aucun nom trouvé !");
+    const clientName = req.body.clientName;
+    if (!clientName) return res.status(400).json({ error: "Pas de nom" });
+
+    const exists = clients.find(c => c === clientName);
+    if (!exists) {
+        clients.push(clientName);
+        logs.push({ time: new Date().toISOString(), action: "register", clientName });
+        console.log(`[REGISTER] Nouveau client ajouté : ${clientName}`);
     }
-    res.json({ status: "ok" });
+    res.json({ status: "success" });
 });
 
-// Renvoyer la liste des clients
+// Liste des clients
 app.get("/clients", (req, res) => {
     res.json(clients);
 });
 
-// Vider la liste des clients
-app.get("/clear", (req, res) => {
-    clients = [];
-    console.log("[SERVER] Liste des clients effacée");
+// Logs
+app.get("/logs", (req, res) => {
+    res.json(logs);
+});
+
+// Clear logs
+app.post("/logs/clear", (req, res) => {
+    logs = [];
     res.json({ status: "cleared" });
 });
 
-// Lancer le serveur
 app.listen(PORT, () => {
     console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });

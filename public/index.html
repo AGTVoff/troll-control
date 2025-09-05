@@ -1,38 +1,50 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Clients Connectés</title>
+    <meta charset="UTF-8">
+    <title>Troll Control</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #clients { margin-bottom: 20px; }
+        button { margin-right: 10px; }
+    </style>
 </head>
 <body>
-<h1>Clients Connectés</h1>
-<ul id="clients"></ul>
-<button onclick="clearLogs()">Clear Logs</button>
+    <h1>Troll Control</h1>
+    <div>
+        <h3>Clients connectés :</h3>
+        <ul id="clients"></ul>
+    </div>
+    <button onclick="openLogs()">Open Logs</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <pre id="logArea"></pre>
 
-<script>
-async function fetchClients() {
-    const ul = document.getElementById("clients");
-    try {
-        const clients = await fetch("/clients").then(r => r.json());
-        ul.innerHTML = "";
-        clients.forEach(c => {
-            const li = document.createElement("li");
-            li.textContent = c;
-            ul.appendChild(li);
-        });
-    } catch (err) {
-        console.error("Erreur fetch clients :", err);
-    }
-}
+    <script>
+        async function updateClients() {
+            const res = await fetch("/clients");
+            const data = await res.json();
+            const list = document.getElementById("clients");
+            list.innerHTML = "";
+            data.forEach(c => {
+                const li = document.createElement("li");
+                li.textContent = c;
+                list.appendChild(li);
+            });
+        }
 
-async function clearLogs() {
-    await fetch("/clear").then(r => r.json());
-    fetchClients();
-}
+        async function openLogs() {
+            const res = await fetch("/logs");
+            const data = await res.json();
+            document.getElementById("logArea").textContent = JSON.stringify(data, null, 2);
+        }
 
-// Rafraîchit toutes les secondes
-setInterval(fetchClients, 1000);
-fetchClients();
-</script>
+        async function clearLogs() {
+            await fetch("/logs/clear", { method: "POST" });
+            document.getElementById("logArea").textContent = "";
+        }
+
+        setInterval(updateClients, 2000);
+        updateClients();
+    </script>
 </body>
 </html>
